@@ -21,7 +21,7 @@ class ship:
     y = planet.r + 100
     dx = 0
     dy = 0
-    phi = 0  # -math.pi*5.5/4
+    phi = math.pi/2  # -math.pi*5.5/4
     dphi = 0
     maxthrust = .02
     thrust = 0.5
@@ -49,12 +49,12 @@ def loop():
     else:
         # Sky and planet
         pygame.draw.rect(game.screen, SKY, (0,0,game.width,game.height))
-        planetx = game.width/2 + ship.x*math.sin(ship.phi) + ship.y*math.cos(ship.phi)
-        planety = game.height/2 - ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
+        planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
+        planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
         pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
-        n = 16
-        for i in xrange(1,n):
-            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
+#        n = 16
+#        for i in xrange(1,n):
+#            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
         # Spaceship
         if not game.crashed:
             game.screen.blit(ship.rocket,(game.width/2-9,game.height/2-40))
