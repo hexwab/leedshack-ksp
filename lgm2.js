@@ -10,23 +10,24 @@ var landed = false;
 var zoom=1;
 var d=document.getElementById("d");
 function frame() {
-    c.fillStyle="cyan";
-    c.fillRect(0,0,320,256);
-    c.save();
-    c.translate(-160,-128);
-    c.scale(zoom,zoom);
-    c.rotate(ship.phi);
 
-// draw ground
-    c.fillStyle="#008000";//"#808080";
-    c.beginPath();
-    c.arc(ship.x,ship.y,planet.r,2*Math.PI,false);
-    c.fill();
-    c.restore();
+    {
+	//draw sky
+	c.fillStyle="cyan";
+	c.fillRect(0,0,320,256);
 
-    //draw ship
-    c.fillStyle="black";
-    c.fillRect(160,128,4,-16);
+	// draw ground
+	c.fillStyle="#008000";//"#808080";
+	var planetx = 160 + ship.x*Math.sin(ship.phi) + ship.y*Math.cos(ship.phi);
+	var planety = 128 - ship.x*Math.cos(ship.phi) + ship.y*Math.sin(ship.phi);
+	c.beginPath();
+	c.arc(planetx,planety, planet.r,2*Math.PI,false);
+	c.fill();
+
+	//draw ship
+	c.fillStyle="black";
+	c.fillRect(160,128,4,-16);
+    }
 
     //thrust
     ship.dx += ship.maxthrust * ship.thrust * Math.cos(ship.phi);
@@ -52,11 +53,9 @@ function frame() {
 	alert("crashed");
     } else {
 	var g = 0.01;
-//	ship.dx -= g * Math.cos(theta);
-//	ship.dy -= g * Math.sin(theta);
-
+	ship.dx -= g * Math.cos(theta);
+	ship.dy -= g * Math.sin(theta);
     }
-    c.restore();
 //    d.innerHTML = "r="+ship.r+"\ndr="+ship.dr+"\ntheta="+ship.theta+"\ndtheta="+ship.dtheta+"\nthrust="+ship.thrust+(landed?"\nlanded":"");
     d.innerHTML = "x="+ship.x+" dx="+ship.dx+"\ny="+ship.y+" dy="+ship.dy+
 	"\nr="+r+" dr="+dr+
