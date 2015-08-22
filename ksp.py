@@ -9,7 +9,7 @@ class game:
     height = 256
     crashed = False
     landed = False
-    zoom=1
+    zoom = 1
     running = True
     screen = None
 
@@ -28,10 +28,16 @@ def loop():
     GROUND = (0,128,0)
 
     game.clock.tick(60)
+
+    # Sky and planet
     pygame.draw.rect(game.screen, SKY, (0,0,game.width,game.height))
     planetx = 160 + ship.x*math.sin(ship.phi) + ship.y*math.cos(ship.phi)
     planety = 128 - ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
     pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
+
+    # Spaceship
+    game.screen.blit(ship.rocket,(160-9,128-40))
+    
     for event in pygame.event.get():
         if event.type == QUIT:
             game.running = False
@@ -43,9 +49,9 @@ def loop():
 def main():
     pygame.init()
     pygame.display.set_caption('Leedshack-KSP')
-    pygame.mouse.set_visible(0)
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
+    ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
     while game.running:
         loop()
         pygame.display.flip()
