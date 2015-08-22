@@ -34,7 +34,7 @@ def loop():
     planetx = game.width/2 + ship.x*math.sin(ship.phi) + ship.y*math.cos(ship.phi)
     planety = game.height/2 - ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
     pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
-    print planetx + ", " + planety
+    print str(planetx) + ", " + str(planety)
 
     # Spaceship
     if not game.crashed:
