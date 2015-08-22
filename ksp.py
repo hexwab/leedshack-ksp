@@ -74,11 +74,29 @@ def loop():
         elif event.type == KEYDOWN:
             if event.key == ord('q'):
                 game.running = False
-    
+            elif event.key == ord('x'):
+                ship.thrust = 0 # no thrust
+            elif event.key == ord('z'):
+                ship.thrust = 1 # 100% thrust
+            elif event.key == ord('w'):
+                ship.thrust += 1/16
+            elif event.key == ord('s'):
+                ship.thrust -= 1/16
+            elif event.key == ord('a'):
+                ship.dphi += .001
+            elif event.key == ord('d'):
+                ship.dphi -= .001
+
+    if ship.thrust < 0:
+        ship.thrust = 0
+    elif ship.thrust > 1:
+        ship.thrust = 1
+    print ship.thrust
 
 def main():
     pygame.init()
     pygame.display.set_caption('Leedshack-KSP')
+    pygame.key.set_repeat(20, 20)
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
