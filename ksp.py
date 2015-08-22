@@ -79,9 +79,9 @@ def loop():
             elif event.key == ord('z'):
                 ship.thrust = 1 # 100% thrust
             elif event.key == ord('w'):
-                ship.thrust += 1/16
+                ship.thrust += 1./16
             elif event.key == ord('s'):
-                ship.thrust -= 1/16
+                ship.thrust -= 1./16
             elif event.key == ord('a'):
                 ship.dphi += .001
             elif event.key == ord('d'):
