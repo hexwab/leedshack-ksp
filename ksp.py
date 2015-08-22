@@ -34,10 +34,12 @@ def loop():
     planetx = game.width/2 + ship.x*math.sin(ship.phi) + ship.y*math.cos(ship.phi)
     planety = game.height/2 - ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
     pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
+    print planetx + ", " + planety
 
     # Spaceship
     if not game.crashed:
         game.screen.blit(ship.rocket,(game.width/2-9,game.height/2-40))
+        game.screen.blit(game.altimeter,(game.width/2-65+16-3,5))
 
         ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
         ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
@@ -60,8 +62,15 @@ def loop():
             g = 0.01
             ship.dx -= g * math.cos(theta)
             ship.dy -= g * math.sin(theta)
+        text = game.font.render(str(int(r-planet.r)), 0, (20,20,20))
+        textpos = text.get_rect()
+        print textpos
+        textpos.centerx = game.screen.get_rect().centerx
+        textpos.centery += 14
+        game.screen.blit(text,textpos)
+        
     else:
-        text = game.font.render("CRASHED", 0, (255,0,0))
+        text = game.crashfont.render("CRASHED", 0, (255,0,0))
         textpos = text.get_rect()
         textpos.centerx = game.screen.get_rect().centerx
         textpos.centery = game.screen.get_rect().centery
@@ -100,7 +109,9 @@ def main():
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
-    game.font = pygame.font.Font(None, 64)
+    game.altimeter = pygame.image.load("images/real stuff/altimeter.png")
+    game.crashfont = pygame.font.Font(None, 64)
+    game.font = pygame.font.Font(None, 32)
     while game.running:
         loop()
         pygame.display.flip()
