@@ -2,7 +2,7 @@ import os, pygame, math, random, pygame.gfxdraw
 from pygame.locals import *
 
 class planet:
-    r = 2000
+    r = 10000
 
 class game:
     width = 320*2
@@ -13,6 +13,7 @@ class game:
     paused = False
     screen = None
     map = False
+    fuel = 0
 
 class ship:
     x = 0 #planet.r
@@ -38,11 +39,35 @@ def loop():
 
     game.clock.tick(60)
 
+    r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
+
     if game.map:
         # map screen
         pygame.draw.rect(game.screen, BLACK, (0,0,game.width,game.height))
-        scale = 0.05
+        scale = 0.005
+
+        # orbit
+        mu = 100000000 # CHECKME
+        h = ship.x*ship.dy - ship.y*ship.dx
+        ex = ship.dy*h/mu - ship.x/r
+        ey =-ship.dx*h/mu - ship.y/r
+        e = math.sqrt(ex*ex+ey*ey)
+        if e!=1:
+            a = h*h / (mu*(1-e*e))
+            omega = math.atan2(ey,ex)
+            n = 1000
+            for i in xrange(0,n-1):
+                theta = i*2*math.pi/n
+                d = a*(1-e*e)/(1+e*math.cos(-theta + omega))
+                x = d*scale*math.cos(theta)
+                y = d*scale*math.sin(theta)
+                print d
+                game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
+
+        # planet
         pygame.draw.circle(game.screen,GROUND, (int(game.width/2),int(game.height/2)), int(planet.r*scale))
+
+        # ship
         shipx=int(game.width/2+ship.x*scale)
         shipy=int(game.height/2+ship.y*scale)
         pygame.draw.circle(game.screen,WHITE, (shipx, shipy), 2)
@@ -50,10 +75,18 @@ def loop():
         pygame.draw.line(game.screen,RED, (shipx,shipy), (int(shipx+ship.dx*4), int(shipy+ship.dy*4)))
     else:
         # Sky and planet
-        global r
+
         pygame.draw.rect(game.screen, (0,128-(r-planet.r)/125,255-(r-planet.r)/250), (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
+        # circle is inaccurate for large radii
+#        if planet.r > 5000:
+#            pygame.draw.polygon(game.screen, GROUND, 
+#        for x in xrange(0,game.width-1):
+#            for y in xrange(0,game.width-1):
+#                if (x-planetx)*(x-planetx)+(y-planety)*(y-planety) < planet.r *planet.r:
+#                    game.screen.set_at((x,y),GROUND)
+
         if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
             pygame.draw.circle(game.screen,GROUND, (int(planetx),int(planety)), planet.r)
 #        n = 16
@@ -67,22 +100,20 @@ def loop():
                 flames.fill((255,255,255,alpha),None,pygame.BLEND_RGBA_MULT)
                 game.screen.blit(flames,(game.width/2-5,game.height/2))
                 
-            if ship.parachute == True:
+            if ship.parachute:
                 game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-76))
             game.screen.blit(ship.rocket,(game.width/2-10,game.height/2-40))
         else:
-            global explosionalpha
-            global crashtext
-            text = game.crashfont.render(crashtext, 0, RED)
+            text = game.crashfont.render(game.crashtext, 0, RED)
             textpos = text.get_rect()
             textpos.centerx = game.screen.get_rect().centerx
             textpos.centery = game.screen.get_rect().centery
             game.screen.blit(text,textpos)
 
-            if explosionalpha > 1:
+            if game.explosionalpha > 1:
                 boom = game.explosion.copy()
-                explosionalpha -= 2
-                boom.fill((255,255,255,explosionalpha),None,pygame.BLEND_RGBA_MULT)
+                game.explosionalpha -= 2
+                boom.fill((255,255,255,game.explosionalpha),None,pygame.BLEND_RGBA_MULT)
                 game.screen.blit(boom,(game.width/2-64,game.height/2-64))
 
     # calculations
@@ -99,7 +130,7 @@ def loop():
         
         # Altimeter
         game.screen.blit(game.altimeter,(game.width/2-65-65-8+16-3,5))
-        text = game.font.render(str(int(r-planet.r)), 0, (20,20,20))
+        text = game.font.render(str(int(r-planet.r)).zfill(5), 0, (20,20,20))
         textpos = text.get_rect()
         textpos.centerx = game.screen.get_rect().centerx-65-8
         textpos.centery += 14
@@ -107,7 +138,7 @@ def loop():
 
         # Velocityometer
         game.screen.blit(game.velocity,(game.width/2+16+8-3,5))
-        text = game.font.render(str(int(speed*60)),0,(20,20,20))
+        text = game.font.render(str(int(speed*60)).zfill(5),0,(20,20,20))
         textpos = text.get_rect()
         textpos.centerx = game.screen.get_rect().centerx+65+8
         textpos.centery += 14
@@ -170,11 +201,12 @@ def loop():
         game.screen.blit(correctedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
 
         # Sky
-        global cloudx; global cloudy
-        if r > 3000 and cloudy > -100:
-            cloudx -= 2
-            cloudy -= 2
-            game.screen.blit(game.cloudedsky, (cloudx,cloudy))
+        if not map:
+            global cloudx; global cloudy
+            if r > planet.r+1000 and cloudy > -100:
+                cloudx -= 2
+                cloudy -= 2
+                game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
         ship.landed = False
         # we must be:m
@@ -220,9 +252,9 @@ def loop():
                 game.running = False
             elif event.key == ord('x'):
                 ship.thrust = 0 # no thrust
-            elif event.key == ord('z') and ship.fuel > 0:
+            elif event.key == ord('z'):
                 ship.thrust = 1 # 100% thrust
-            elif event.key == ord('w') and ship.fuel > 0:
+            elif event.key == ord('w'):
                 ship.thrust += 1./16
             elif event.key == ord('s'):
                 ship.thrust -= 1./16
@@ -250,6 +282,8 @@ def loop():
         ship.thrust = 0
     elif ship.thrust > 1:
         ship.thrust = 1
+    if ship.fuel == 0:
+        ship.thrust = 0
 
 def main():
     pygame.init()
@@ -258,12 +292,8 @@ def main():
     global cloudx
     global cloudy
     messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","NOT APOLLO 11","STS-FAILURE"]
-    global crashtext
-    global r
-    r = 2000
-    global explosionalpha
-    explosionalpha = 255
-    crashtext = messages[random.randint(0,6)]
+    game.crashtext = messages[random.randint(0,6)]
+    game.explosionalpha = 255
     cloudx = game.width
     cloudy = game.height
     game.screen = pygame.display.set_mode((game.width,game.height))
@@ -277,7 +307,7 @@ def main():
     game.navcircle = pygame.image.load("images/EXTRA BITS/all da ball.png")
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 48)
-    game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
+    game.font = pygame.font.Font("fonts/DSEG7Classic-Bold.ttf", 20)
     game.explosion = pygame.image.load("images/real stuff/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
     ship.fuel = 4000
