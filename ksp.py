@@ -1,6 +1,5 @@
-import os, pygame, math
+import os, pygame, math, random, pygame.gfxdraw
 from pygame.locals import *
-import pygame.gfxdraw
 
 class planet:
     r = 2000
@@ -30,7 +29,7 @@ class ship:
 
 def loop():
     SKY = (0,128,255)
-    GROUND = (64,128,0)
+    GROUND = (40,120,70)
     RED = (255,0,0)
     BLACK = (0,0,0)
     WHITE = (255,255,255)
@@ -53,17 +52,24 @@ def loop():
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
         if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
-            pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
+            pygame.draw.circle(game.screen,GROUND, (int(planetx),int(planety)), planet.r)
 #        n = 16
 #        for i in xrange(1,n):
 #            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
         # Spaceship
         if not game.crashed:
+            if ship.thrust > 0:
+                flames = ship.flame.copy()
+                alpha = int(ship.thrust * 255)
+                flames.fill((255,255,255,alpha),None,pygame.BLEND_RGBA_MULT)
+                game.screen.blit(flames,(game.width/2-9,game.height/2-40))
+                
             if ship.parachute == True:
                 game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-80))
-            game.screen.blit(ship.rocket,(game.width/2-9,game.height/2-40))
+            game.screen.blit(ship.rocket,(game.width/2-10,game.height/2-40))
         else:
-            text = game.crashfont.render("WASTED", 0, (255,0,0))
+            global crashtext
+            text = game.crashfont.render(crashtext, 0, RED)
             textpos = text.get_rect()
             textpos.centerx = game.screen.get_rect().centerx
             textpos.centery = game.screen.get_rect().centery
@@ -187,6 +193,10 @@ def loop():
             if event.key == ord('p'):
                 ship.parachute = True
                 print "chute deployed"
+            if event.key == ord('r'):
+                cloudx = game.width
+                cloudy = game.height
+                print "The sky is falling!"
 
     if ship.thrust < 0:
         ship.thrust = 0
@@ -199,12 +209,16 @@ def main():
     pygame.key.set_repeat(20, 20)
     global cloudx
     global cloudy
+    messages = ["CRASHED","WASTED","YOU DEAD","WRONG WAY","THE SKY IS UP","OOPS"]
+    global crashtext
+    crashtext = messages[random.randint(0,5)]
     cloudx = game.width
     cloudy = game.height
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
     ship.parachuteimage = pygame.image.load("images/real stuff/para_open.png")
+    ship.flame = pygame.image.load("images/real stuff/FLAMES.png")
     game.altimeter = pygame.image.load("images/real stuff/altimeter.png")
     game.velocity = pygame.image.load("images/real stuff/velocity_meter.png")
     game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png")
