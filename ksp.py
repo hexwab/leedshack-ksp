@@ -26,6 +26,7 @@ class ship:
     sas = False
     parachute = False
     crash_tolerance = 0.5
+    fuel = 0
 
 def loop():
     SKY = (0,128,255)
@@ -62,10 +63,10 @@ def loop():
                 flames = ship.flame.copy()
                 alpha = int(ship.thrust * 255)
                 flames.fill((255,255,255,alpha),None,pygame.BLEND_RGBA_MULT)
-                game.screen.blit(flames,(game.width/2-9,game.height/2-40))
+                game.screen.blit(flames,(game.width/2-5,game.height/2))
                 
             if ship.parachute == True:
-                game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-80))
+                game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-76))
             game.screen.blit(ship.rocket,(game.width/2-10,game.height/2-40))
         else:
             global crashtext
@@ -102,6 +103,8 @@ def loop():
         textpos.centerx = game.screen.get_rect().centerx+65+8
         textpos.centery += 14
         game.screen.blit (text,textpos)
+
+        # Fuel bar
 
         # Thrustometer
         game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
@@ -172,9 +175,9 @@ def loop():
                 game.running = False
             elif event.key == ord('x'):
                 ship.thrust = 0 # no thrust
-            elif event.key == ord('z'):
+            elif event.key == ord('z') and ship.fuel > 0:
                 ship.thrust = 1 # 100% thrust
-            elif event.key == ord('w'):
+            elif event.key == ord('w') and ship.fuel > 0:
                 ship.thrust += 1./16
             elif event.key == ord('s'):
                 ship.thrust -= 1./16
@@ -209,9 +212,9 @@ def main():
     pygame.key.set_repeat(20, 20)
     global cloudx
     global cloudy
-    messages = ["CRASHED","WASTED","YOU DEAD","WRONG WAY","THE SKY IS UP","OOPS"]
+    messages = ["CRASHED","WASTED","YOU DEAD","WRONG WAY","THE SKY IS UP","OOPS","NOT APOLLO 11","SMOOOTH"]
     global crashtext
-    crashtext = messages[random.randint(0,5)]
+    crashtext = messages[random.randint(0,7)]
     cloudx = game.width
     cloudy = game.height
     game.screen = pygame.display.set_mode((game.width,game.height))
@@ -226,6 +229,8 @@ def main():
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 64)
     game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
+    ship.fuelbar = pygame.image.load("images/fuel/fuel_8")
+    ship.fuel = 4000
     while game.running:
         loop()
         pygame.display.flip()
