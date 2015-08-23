@@ -50,7 +50,7 @@ def tick():
     ship.y += ship.dy
     if ship.sas:
         if ship.dphi:
-            ship.dphi += -0.001 if ship.dphi>0 else 0.001
+            ship.dphi += -0.0002 if ship.dphi>0 else 0.0002
 
     ship.landed = False
     # we must be:
@@ -79,7 +79,7 @@ def tick():
         #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
         
         # drag
-        drag = math.exp(-r/5000)*0.1 if ship.parachute else math.exp(-r/5000)*0.005
+        drag = math.exp(-(r-planet.r)/3000)*0.035 if ship.parachute else math.exp(-(r-planet.r)/3000)*0.0005
         #print "drag=",drag
         ship.dx *= 1-drag
         ship.dy *= 1-drag
@@ -101,7 +101,7 @@ def loop():
     if game.map:
         # map screen
         pygame.draw.rect(game.screen, BLACK, (0,0,game.width,game.height))
-        scale = 0.005
+        scale = 0.003
 
         # orbit
         mu = 4600000 # CHECKME
@@ -118,7 +118,8 @@ def loop():
                 d = a*(1-e*e)/(1+e*math.cos(-theta + omega))
                 x = d*scale*math.cos(theta)
                 y = d*scale*math.sin(theta)
-                game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
+                if abs(d*scale) < 2000:
+                    game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
             apo = a*(1-e*e)/(1+e)
             peri  = a*(1-e*e)/(1-e)
             #print peri, apo
@@ -134,9 +135,8 @@ def loop():
         pygame.draw.line(game.screen,RED, (shipx,shipy), (int(shipx+ship.dx*4), int(shipy+ship.dy*4)))
     else:
         # Sky and planet
-        atmo = 1 if (r-planet.r) > 10000 else ((r-planet.r)/10000)
+        atmo = 1 if (r-planet.r) > 10000 else 0 if r<planet.r else ((r-planet.r)/10000)
         skycolour = (0,128-atmo*128,255-atmo*255)
-        print atmo, skycolour
         pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
@@ -307,7 +307,7 @@ def main():
     pygame.key.set_repeat(20, 20)
     global cloudx
     global cloudy
-    messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","NOT APOLLO 11","STS-FAILURE"]
+    messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","HARDLY APOLLO 11","STS FAILURE"]
     game.crashtext = messages[random.randint(0,6)]
     game.explosionalpha = 255
     cloudx = game.width
@@ -322,7 +322,7 @@ def main():
     game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png")
     game.navcircle = pygame.image.load("images/EXTRA BITS/all da ball.png")
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
-    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 48)
+    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 45)
     game.font = pygame.font.Font("fonts/DSEG7Classic-Bold.ttf", 20)
     game.explosion = pygame.image.load("images/real stuff/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
