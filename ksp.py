@@ -257,7 +257,7 @@ def main():
     pygame.key.set_repeat(20, 20)
     global cloudx
     global cloudy
-    messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","NOT APOLLO 11","DOM'S BETTER"]
+    messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","NOT APOLLO 11","STS-FAILURE"]
     global crashtext
     global r
     r = 2000
@@ -276,7 +276,7 @@ def main():
     game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png")
     game.navcircle = pygame.image.load("images/EXTRA BITS/all da ball.png")
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
-    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 56)
+    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 48)
     game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
     game.explosion = pygame.image.load("images/real stuff/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
