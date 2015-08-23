@@ -27,6 +27,7 @@ class ship:
     parachute = False
     crash_tolerance = 0.5
     fuel = 0
+    landed = False
 
 def loop():
     SKY = (0,128,255)
@@ -104,7 +105,43 @@ def loop():
         textpos.centery += 14
         game.screen.blit (text,textpos)
 
-        # Fuel bar
+        # Fuel bar and fuel management
+        if ship.landed == True and ship.fuel < 4000:
+            ship.fuel += 4
+        else:
+            ship.fuel -= ship.thrust
+        if ship.fuel > 3500:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
+        elif ship.fuel > 3000:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_7.png")
+        elif ship.fuel > 2500:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_6.png")
+        elif ship.fuel > 2000:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_5.png")
+        elif ship.fuel > 1500:
+            if pygame.time.get_ticks() % 2000 < 500:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_4-1.png")
+            else:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_4.png")
+        elif ship.fuel > 1000:
+            if pygame.time.get_ticks() % 2000 < 750:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_3-1.png")
+            else:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_3.png")
+        elif ship.fuel > 500:
+            if pygame.time.get_ticks() % 1000 < 500:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_2-1.png")
+            else:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_2.png")
+        elif ship.fuel > 0:
+            if pygame.time.get_ticks() % 1000 < 500:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_1-1.png")
+            else:
+                ship.fuelbar = pygame.image.load("images/fuel/fuel_1.png")
+        else:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_0.png")
+            ship.thrust = 0
+        game.screen.blit(ship.fuelbar,(8,game.height-59-8))
 
         # Thrustometer
         game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
@@ -131,7 +168,7 @@ def loop():
             cloudy -= 2
             game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
-        landed = False
+        ship.landed = False
         # we must be:m
         # (a) within epsilon of the surface;
         # (b) going below the maximum safe speed;
@@ -143,7 +180,7 @@ def loop():
             ship.dx = ship.dy = 0
             ship.x = planet.r * math.cos(theta)
             ship.y = planet.r * math.sin(theta)
-            landed = True
+            ship.landed = True
             ship.parachute = False
             
         elif (r < planet.r):
@@ -229,7 +266,7 @@ def main():
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 64)
     game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
-    ship.fuelbar = pygame.image.load("images/fuel/fuel_8")
+    ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
     ship.fuel = 4000
     while game.running:
         loop()
