@@ -50,7 +50,8 @@ def loop():
         pygame.draw.line(game.screen,RED, (shipx,shipy), (int(shipx+ship.dx*4), int(shipy+ship.dy*4)))
     else:
         # Sky and planet
-        pygame.draw.rect(game.screen, SKY, (0,0,game.width,game.height))
+        global r
+        pygame.draw.rect(game.screen, (0,128-(r-planet.r)/125,255-(r-planet.r)/250), (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
         if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
@@ -70,6 +71,7 @@ def loop():
                 game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-76))
             game.screen.blit(ship.rocket,(game.width/2-10,game.height/2-40))
         else:
+            explosionalpha = 0
             global crashtext
             text = game.crashfont.render(crashtext, 0, RED)
             textpos = text.get_rect()
@@ -251,6 +253,8 @@ def main():
     global cloudy
     messages = ["CRASHED","WASTED","YOU DEAD","WRONG WAY","THE SKY IS UP","OOPS","NOT APOLLO 11","SMOOOTH"]
     global crashtext
+    global r
+    r = 2000
     crashtext = messages[random.randint(0,7)]
     cloudx = game.width
     cloudy = game.height
