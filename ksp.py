@@ -6,8 +6,8 @@ class planet:
     r = 2000
 
 class game:
-    width = 320*2
-    height = 256*2
+    width = 320*4
+    height = 256*4
     crashed = False
     zoom = 1
     running = True
@@ -30,7 +30,7 @@ class ship:
 
 def loop():
     SKY = (0,128,255)
-    GROUND = (0,128,0)
+    GROUND = (64,128,0)
     RED = (255,0,0)
     BLACK = (0,0,0)
     WHITE = (255,255,255)
@@ -59,9 +59,11 @@ def loop():
 #            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
         # Spaceship
         if not game.crashed:
+            if ship.parachute == True:
+                game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-80))
             game.screen.blit(ship.rocket,(game.width/2-9,game.height/2-40))
         else:
-            text = game.crashfont.render("CRASHED", 0, (255,0,0))
+            text = game.crashfont.render("WASTED", 0, (255,0,0))
             textpos = text.get_rect()
             textpos.centerx = game.screen.get_rect().centerx
             textpos.centery = game.screen.get_rect().centery
@@ -80,13 +82,26 @@ def loop():
         theta = math.atan2(ship.y,ship.x)
         
         # Altimeter
-        game.screen.blit(game.altimeter,(game.width/2-65+16-3,5))
+        game.screen.blit(game.altimeter,(game.width/2-65-65-8+16-3,5))
         text = game.font.render(str(int(r-planet.r)), 0, (20,20,20))
         textpos = text.get_rect()
-        textpos.centerx = game.screen.get_rect().centerx
+        textpos.centerx = game.screen.get_rect().centerx-65-8
         textpos.centery += 14
         game.screen.blit(text,textpos)
 
+        # Velocityometer
+        game.screen.blit(game.velocity,(game.width/2+16+8-3,5))
+        text = game.font.render(str(int(speed*60)),0,(20,20,20))
+        textpos = text.get_rect()
+        textpos.centerx = game.screen.get_rect().centerx+65+8
+        textpos.centery += 14
+        game.screen.blit (text,textpos)
+
+        # Thrustometer
+        game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
+        pygame.draw.rect(game.thrust,RED,(1,64-ship.thrust*64,22,1),2)
+        game.screen.blit(game.thrust,(game.width-64-8-8-24,game.height-8-64))
+        
         ship.phi+=ship.dphi
         ship.x += ship.dx
         ship.y += ship.dy
@@ -94,8 +109,23 @@ def loop():
             if ship.dphi:
                 ship.dphi += -0.001 if ship.dphi>0 else 0.001
 
+        # Navcircle
+
+        hyp = r
+        opp = ship.y
+        adj = ship.x
+        if adj != 0:
+            angle = math.degrees(math.atan(opp/adj))
+        else:
+            angle = 0
+        print angle
+        
+        rotatedNavcircle = pygame.transform.rotate(game.navcircle,int(angle)-math.degrees(ship.phi))
+        #print math.degrees(ship.phi)-90
+        game.screen.blit(rotatedNavcircle,(game.width-64-8,game.height-64-8))
+
         landed = False
-        # we must be:
+        # we must be:m
         # (a) within epsilon of the surface;
         # (b) going below the maximum safe speed;
         # (c) heading downwards;
@@ -172,7 +202,12 @@ def main():
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
+    ship.parachuteimage = pygame.image.load("images/real stuff/para_open.png")
     game.altimeter = pygame.image.load("images/real stuff/altimeter.png")
+    game.velocity = pygame.image.load("images/real stuff/velocity_meter.png")
+    game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png")
+    game.navcircle = pygame.image.load("images/EXTRA BITS/all da ball.png")
+    game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 64)
     game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
     while game.running:
