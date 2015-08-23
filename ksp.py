@@ -23,7 +23,7 @@ class ship:
     phi = math.pi/2  # -math.pi*5.5/4
     dphi = 0
     maxthrust = .02
-    thrust = 0.5
+    thrust = 0
     sas = False
     parachute = False
     crash_tolerance = 0.5
@@ -69,15 +69,17 @@ def loop():
 
     # calculations
     if not game.crashed and not game.paused:
+
+        # Physics-y stuff
         ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
         ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
-        print "thrust ", ship.thrust, ship.maxthrust * ship.thrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
+        #print "thrust ", ship.thrust * ship.maxthrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
 
         speed = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
         r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
         theta = math.atan2(ship.y,ship.x)
         
-        # altimeter
+        # Altimeter
         game.screen.blit(game.altimeter,(game.width/2-65+16-3,5))
         text = game.font.render(str(int(r-planet.r)), 0, (20,20,20))
         textpos = text.get_rect()
@@ -106,7 +108,7 @@ def loop():
             ship.y = planet.r * math.sin(theta)
             landed = True
             ship.parachute = False
-
+            
         elif (r < planet.r):
             print "crashed", abs(r-planet.r), speed
             game.crashed = True
@@ -123,9 +125,10 @@ def loop():
             ship.dx *= 1-drag
             ship.dy *= 1-drag
         
-#        print "theta=",theta
-        print ship.x, ship.dx, ship.y, ship.dy, r, speed, ship.phi
-    
+        #print "theta=",theta
+        #print ship.x, ship.dx, ship.y, ship.dy, r, ship.phi
+
+    # Key detection
     for event in pygame.event.get():
         if event.type == QUIT:
             game.running = False
@@ -170,8 +173,8 @@ def main():
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
     game.altimeter = pygame.image.load("images/real stuff/altimeter.png")
-    game.crashfont = pygame.font.Font(None, 64)
-    game.font = pygame.font.Font(None, 32)
+    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 64)
+    game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
     while game.running:
         loop()
         pygame.display.flip()
