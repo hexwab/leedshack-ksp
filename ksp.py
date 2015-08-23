@@ -111,8 +111,16 @@ def loop():
 
         # Navcircle
         rotatedNavcircle = pygame.transform.rotate(game.navcircle,math.degrees(theta-ship.phi))
+        correctedNavcircle = pygame.transform.flip(rotatedNavcircle,1,0)
         navpos = rotatedNavcircle.get_rect()
-        game.screen.blit(rotatedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
+        game.screen.blit(correctedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
+
+        # Sky
+        global cloudx; global cloudy
+        if r > 3000 and cloudy > -100:
+            cloudx -= 2
+            cloudy -= 2
+            game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
         landed = False
         # we must be:m
@@ -189,6 +197,10 @@ def main():
     pygame.init()
     pygame.display.set_caption('Leedshack-KSP')
     pygame.key.set_repeat(20, 20)
+    global cloudx
+    global cloudy
+    cloudx = game.width
+    cloudy = game.height
     game.screen = pygame.display.set_mode((game.width,game.height))
     game.clock = pygame.time.Clock()
     ship.rocket = pygame.image.load("images/real stuff/FULL ROKET.png")
