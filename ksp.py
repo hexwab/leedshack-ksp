@@ -134,8 +134,10 @@ def loop():
         pygame.draw.line(game.screen,RED, (shipx,shipy), (int(shipx+ship.dx*4), int(shipy+ship.dy*4)))
     else:
         # Sky and planet
-
-        pygame.draw.rect(game.screen, (0,128-(r-planet.r)/125,255-(r-planet.r)/250), (0,0,game.width,game.height))
+        atmo = 1 if (r-planet.r) > 10000 else ((r-planet.r)/10000)
+        skycolour = (0,128-atmo*128,255-atmo*255)
+        print atmo, skycolour
+        pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
         # circle is inaccurate for large radii
@@ -242,7 +244,7 @@ def loop():
     game.screen.blit(correctedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
 
     # Sky
-    if not map:
+    if not game.map:
         global cloudx; global cloudy
         if r > planet.r+1000 and cloudy > -100:
             cloudx -= 2
