@@ -9,7 +9,6 @@ class game:
     width = 320*2
     height = 256*2
     crashed = False
-    landed = False
     zoom = 1
     running = True
     paused = False
@@ -18,7 +17,7 @@ class game:
 
 class ship:
     x = 0 #planet.r
-    y = planet.r + 100
+    y = planet.r #+ 100
     dx = 0
     dy = 0
     phi = math.pi/2  # -math.pi*5.5/4
@@ -26,6 +25,8 @@ class ship:
     maxthrust = .02
     thrust = 0.5
     sas = False
+    parachute = False
+    crash_tolerance = 0.5
 
 def loop():
     SKY = (0,128,255)
@@ -51,7 +52,8 @@ def loop():
         pygame.draw.rect(game.screen, SKY, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
-        pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
+        if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
+            pygame.draw.circle(game.screen,(0,255,0), (int(planetx),int(planety)), planet.r)
 #        n = 16
 #        for i in xrange(1,n):
 #            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
@@ -69,9 +71,9 @@ def loop():
     if not game.crashed and not game.paused:
         ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
         ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
-        print "thrust ", ship.maxthrust * ship.thrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
+        print "thrust ", ship.thrust, ship.maxthrust * ship.thrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
 
-        dr = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
+        speed = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
         r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
         theta = math.atan2(ship.y,ship.x)
         
@@ -79,7 +81,6 @@ def loop():
         game.screen.blit(game.altimeter,(game.width/2-65+16-3,5))
         text = game.font.render(str(int(r-planet.r)), 0, (20,20,20))
         textpos = text.get_rect()
-        print textpos
         textpos.centerx = game.screen.get_rect().centerx
         textpos.centery += 14
         game.screen.blit(text,textpos)
@@ -92,20 +93,38 @@ def loop():
                 ship.dphi += -0.001 if ship.dphi>0 else 0.001
 
         landed = False
-        if (abs(r-planet.r)<=-dr and abs(dr) < 0.5):
+        # we must be:
+        # (a) within epsilon of the surface;
+        # (b) going below the maximum safe speed;
+        # (c) heading downwards;
+        # [(d) pointing up (not yet)]
+        # to land safely
+        if r < planet.r+1e-8 and planet.r-r<=speed*2 and speed < ship.crash_tolerance \
+                and ((ship.x+ship.dx)*(ship.x+ship.dx) + (ship.y+ship.dy)*(ship.y+ship.dy) <= ship.x*ship.x+ship.y*ship.y):
             ship.dx = ship.dy = 0
+            ship.x = planet.r * math.cos(theta)
+            ship.y = planet.r * math.sin(theta)
             landed = True
+            ship.parachute = False
+
         elif (r < planet.r):
-            print("crashed")
+            print "crashed", abs(r-planet.r), speed
             game.crashed = True
         else:
+            # gravity
             g = 0.01
             ship.dx -= g * math.cos(theta)
             ship.dy -= g * math.sin(theta)
-            print "grav ", -g * math.cos(theta), -g * math.sin(theta)
+            #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
+
+            # drag
+            drag = math.exp(-r/5000)*0.1 if ship.parachute else math.exp(-r/5000)*0.005
+            #print "drag=",drag
+            ship.dx *= 1-drag
+            ship.dy *= 1-drag
         
-        print "theta=",theta
-        print ship.x, ship.dx, ship.y, ship.dy, r, ship.phi
+#        print "theta=",theta
+        print ship.x, ship.dx, ship.y, ship.dy, r, speed, ship.phi
     
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -134,6 +153,9 @@ def loop():
             if event.key == ord('t'):
                 ship.sas = not ship.sas
                 print "sas enabled" if ship.sas else "sas disabled"
+            if event.key == ord('p'):
+                ship.parachute = True
+                print "chute deployed"
 
     if ship.thrust < 0:
         ship.thrust = 0
