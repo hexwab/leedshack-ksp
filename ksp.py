@@ -6,8 +6,8 @@ class planet:
     r = 2000
 
 class game:
-    width = 320*4
-    height = 256*4
+    width = 320*2
+    height = 256*2
     crashed = False
     zoom = 1
     running = True
@@ -110,19 +110,9 @@ def loop():
                 ship.dphi += -0.001 if ship.dphi>0 else 0.001
 
         # Navcircle
-
-        hyp = r
-        opp = ship.y
-        adj = ship.x
-        if adj != 0:
-            angle = math.degrees(math.atan(opp/adj))
-        else:
-            angle = 0
-        print angle
-        
-        rotatedNavcircle = pygame.transform.rotate(game.navcircle,int(angle)-math.degrees(ship.phi))
-        #print math.degrees(ship.phi)-90
-        game.screen.blit(rotatedNavcircle,(game.width-64-8,game.height-64-8))
+        rotatedNavcircle = pygame.transform.rotate(game.navcircle,math.degrees(theta-ship.phi))
+        navpos = rotatedNavcircle.get_rect()
+        game.screen.blit(rotatedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
 
         landed = False
         # we must be:m
