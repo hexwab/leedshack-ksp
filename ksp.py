@@ -2,7 +2,7 @@ import os, pygame, math, random, pygame.gfxdraw
 from pygame.locals import *
 
 class planet:
-    r = 10000
+    r = 20000
 
 class game:
     width = 320*2
@@ -14,11 +14,12 @@ class game:
     screen = None
     map = False
     fuel = 0
+    ticks = 1
 
 class ship:
     x = 0 #planet.r
-    y = planet.r #+ 100
-    dx = 0
+    y = planet.r #+ 1000
+    dx = 0 #15
     dy = 0
     phi = math.pi/2  # -math.pi*5.5/4
     dphi = 0
@@ -29,6 +30,62 @@ class ship:
     crash_tolerance = 0.5
     fuel = 0
     landed = False
+
+def tick():
+    # Physics-y stuff
+    ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
+    ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
+        #print "thrust ", ship.thrust * ship.maxthrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
+    ship.speed = speed = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
+    r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
+    ship.theta = theta = math.atan2(ship.y,ship.x)
+    
+    if ship.landed and ship.fuel < 4000:
+        ship.fuel += 4
+    else:
+        ship.fuel -= ship.thrust
+        
+    ship.phi+=ship.dphi
+    ship.x += ship.dx
+    ship.y += ship.dy
+    if ship.sas:
+        if ship.dphi:
+            ship.dphi += -0.001 if ship.dphi>0 else 0.001
+
+    ship.landed = False
+    # we must be:
+    # (a) within epsilon of the surface;
+    # (b) going below the maximum safe speed;
+    # (c) heading downwards;
+    # [(d) pointing up (not yet)]
+    # to land safely
+    if r < planet.r+1e-8 and planet.r-r<=speed*2 and speed < ship.crash_tolerance \
+            and ((ship.x+ship.dx)*(ship.x+ship.dx) + (ship.y+ship.dy)*(ship.y+ship.dy) <= ship.x*ship.x+ship.y*ship.y):
+        ship.dx = ship.dy = 0
+        ship.x = planet.r * math.cos(theta)
+        ship.y = planet.r * math.sin(theta)
+        ship.landed = True
+        ship.parachute = False
+            
+    elif (r < planet.r):
+        print "crashed", abs(r-planet.r), speed
+        game.crashed = True
+        game.map = False
+    else:
+        # gravity
+        g = 0.01
+        ship.dx -= g * math.cos(theta)
+        ship.dy -= g * math.sin(theta)
+        #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
+        
+        # drag
+        drag = math.exp(-r/5000)*0.1 if ship.parachute else math.exp(-r/5000)*0.005
+        #print "drag=",drag
+        ship.dx *= 1-drag
+        ship.dy *= 1-drag
+        
+        #print "theta=",theta
+        #print ship.x, ship.dx, ship.y, ship.dy, r, ship.phi
 
 def loop():
     SKY = (0,128,255)
@@ -47,7 +104,7 @@ def loop():
         scale = 0.005
 
         # orbit
-        mu = 100000000 # CHECKME
+        mu = 4600000 # CHECKME
         h = ship.x*ship.dy - ship.y*ship.dx
         ex = ship.dy*h/mu - ship.x/r
         ey =-ship.dx*h/mu - ship.y/r
@@ -61,8 +118,10 @@ def loop():
                 d = a*(1-e*e)/(1+e*math.cos(-theta + omega))
                 x = d*scale*math.cos(theta)
                 y = d*scale*math.sin(theta)
-                print d
                 game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
+            apo = a*(1-e*e)/(1+e)
+            peri  = a*(1-e*e)/(1-e)
+            #print peri, apo
 
         # planet
         pygame.draw.circle(game.screen,GROUND, (int(game.width/2),int(game.height/2)), int(planet.r*scale))
@@ -118,129 +177,77 @@ def loop():
 
     # calculations
     if not game.crashed and not game.paused:
-
-        # Physics-y stuff
-        ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
-        ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
-        #print "thrust ", ship.thrust * ship.maxthrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
-
-        speed = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
-        r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
-        theta = math.atan2(ship.y,ship.x)
+        for i in xrange(0,game.ticks):
+            tick()
         
-        # Altimeter
-        game.screen.blit(game.altimeter,(game.width/2-65-65-8+16-3,5))
-        text = game.font.render(str(int(r-planet.r)).zfill(5), 0, (20,20,20))
-        textpos = text.get_rect()
-        textpos.centerx = game.screen.get_rect().centerx-65-8
-        textpos.centery += 14
-        game.screen.blit(text,textpos)
+    # Altimeter
+    game.screen.blit(game.altimeter,(game.width/2-65-65-8+16-3,5))
+    text = game.font.render(str(int(r-planet.r)).zfill(5), 0, (20,20,20))
+    textpos = text.get_rect()
+    textpos.centerx = game.screen.get_rect().centerx-65-8
+    textpos.centery += 14
+    game.screen.blit(text,textpos)
 
-        # Velocityometer
-        game.screen.blit(game.velocity,(game.width/2+16+8-3,5))
-        text = game.font.render(str(int(speed*60)).zfill(5),0,(20,20,20))
-        textpos = text.get_rect()
-        textpos.centerx = game.screen.get_rect().centerx+65+8
-        textpos.centery += 14
-        game.screen.blit (text,textpos)
+    # Velocityometer
+    game.screen.blit(game.velocity,(game.width/2+16+8-3,5))
+    text = game.font.render(str(int(ship.speed*60)).zfill(5),0,(20,20,20))
+    textpos = text.get_rect()
+    textpos.centerx = game.screen.get_rect().centerx+65+8
+    textpos.centery += 14
+    game.screen.blit (text,textpos)
 
-        # Fuel bar and fuel management
-        if ship.landed == True and ship.fuel < 4000:
-            ship.fuel += 4
+    # Fuel bar and fuel management
+    if ship.fuel > 3500:
+        ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
+    elif ship.fuel > 3000:
+        ship.fuelbar = pygame.image.load("images/fuel/fuel_7.png")
+    elif ship.fuel > 2500:
+        ship.fuelbar = pygame.image.load("images/fuel/fuel_6.png")
+    elif ship.fuel > 2000:
+        ship.fuelbar = pygame.image.load("images/fuel/fuel_5.png")
+    elif ship.fuel > 1500:
+        if pygame.time.get_ticks() % 2000 < 500:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_4-1.png")
         else:
-            ship.fuel -= ship.thrust
-        if ship.fuel > 3500:
-            ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
-        elif ship.fuel > 3000:
-            ship.fuelbar = pygame.image.load("images/fuel/fuel_7.png")
-        elif ship.fuel > 2500:
-            ship.fuelbar = pygame.image.load("images/fuel/fuel_6.png")
-        elif ship.fuel > 2000:
-            ship.fuelbar = pygame.image.load("images/fuel/fuel_5.png")
-        elif ship.fuel > 1500:
-            if pygame.time.get_ticks() % 2000 < 500:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_4-1.png")
-            else:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_4.png")
-        elif ship.fuel > 1000:
-            if pygame.time.get_ticks() % 2000 < 750:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_3-1.png")
-            else:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_3.png")
-        elif ship.fuel > 500:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_4.png")
+    elif ship.fuel > 1000:
+        if pygame.time.get_ticks() % 2000 < 750:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_3-1.png")
+        else:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_3.png")
+    elif ship.fuel > 500:
             if pygame.time.get_ticks() % 1000 < 500:
                 ship.fuelbar = pygame.image.load("images/fuel/fuel_2-1.png")
             else:
                 ship.fuelbar = pygame.image.load("images/fuel/fuel_2.png")
-        elif ship.fuel > 0:
-            if pygame.time.get_ticks() % 1000 < 500:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_1-1.png")
-            else:
-                ship.fuelbar = pygame.image.load("images/fuel/fuel_1.png")
+    elif ship.fuel > 0:
+        if pygame.time.get_ticks() % 1000 < 500:
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_1-1.png")
         else:
-            ship.fuelbar = pygame.image.load("images/fuel/fuel_0.png")
-            ship.thrust = 0
-        game.screen.blit(ship.fuelbar,(8,game.height-59-8))
+            ship.fuelbar = pygame.image.load("images/fuel/fuel_1.png")
+    else:
+        ship.fuelbar = pygame.image.load("images/fuel/fuel_0.png")
+        ship.thrust = 0
+    game.screen.blit(ship.fuelbar,(8,game.height-59-8))
 
-        # Thrustometer
-        game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
-        pygame.draw.rect(game.thrust,RED,(1,64-ship.thrust*64,22,1),2)
-        game.screen.blit(game.thrust,(game.width-64-8-8-24,game.height-8-64))
-        
-        ship.phi+=ship.dphi
-        ship.x += ship.dx
-        ship.y += ship.dy
-        if ship.sas:
-            if ship.dphi:
-                ship.dphi += -0.001 if ship.dphi>0 else 0.001
+    # Thrustometer
+    game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
+    pygame.draw.rect(game.thrust,RED,(1,64-ship.thrust*64,22,1),2)
+    game.screen.blit(game.thrust,(game.width-64-8-8-24,game.height-8-64))
+    
+    # Navcircle
+    rotatedNavcircle = pygame.transform.rotate(game.navcircle,math.degrees(ship.theta-ship.phi))
+    correctedNavcircle = pygame.transform.flip(rotatedNavcircle,1,0)
+    navpos = rotatedNavcircle.get_rect()
+    game.screen.blit(correctedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
 
-        # Navcircle
-        rotatedNavcircle = pygame.transform.rotate(game.navcircle,math.degrees(theta-ship.phi))
-        correctedNavcircle = pygame.transform.flip(rotatedNavcircle,1,0)
-        navpos = rotatedNavcircle.get_rect()
-        game.screen.blit(correctedNavcircle,(game.width-navpos.width/2-32-8,game.height-navpos.height/2-32-8))
-
-        # Sky
-        if not map:
-            global cloudx; global cloudy
-            if r > planet.r+1000 and cloudy > -100:
-                cloudx -= 2
-                cloudy -= 2
-                game.screen.blit(game.cloudedsky, (cloudx,cloudy))
-
-        ship.landed = False
-        # we must be:m
-        # (a) within epsilon of the surface;
-        # (b) going below the maximum safe speed;
-        # (c) heading downwards;
-        # [(d) pointing up (not yet)]
-        # to land safely
-        if r < planet.r+1e-8 and planet.r-r<=speed*2 and speed < ship.crash_tolerance \
-                and ((ship.x+ship.dx)*(ship.x+ship.dx) + (ship.y+ship.dy)*(ship.y+ship.dy) <= ship.x*ship.x+ship.y*ship.y):
-            ship.dx = ship.dy = 0
-            ship.x = planet.r * math.cos(theta)
-            ship.y = planet.r * math.sin(theta)
-            ship.landed = True
-            ship.parachute = False
-            
-        elif (r < planet.r):
-            print "crashed", abs(r-planet.r), speed
-            game.crashed = True
-        else:
-            # gravity
-            g = 0.01
-            ship.dx -= g * math.cos(theta)
-            ship.dy -= g * math.sin(theta)
-            #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
-
-            # drag
-            drag = math.exp(-r/5000)*0.1 if ship.parachute else math.exp(-r/5000)*0.005
-            #print "drag=",drag
-            ship.dx *= 1-drag
-            ship.dy *= 1-drag
-        
-        #print "theta=",theta
-        #print ship.x, ship.dx, ship.y, ship.dy, r, ship.phi
+    # Sky
+    if not map:
+        global cloudx; global cloudy
+        if r > planet.r+1000 and cloudy > -100:
+            cloudx -= 2
+            cloudy -= 2
+            game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
     # Key detection
     for event in pygame.event.get():
@@ -277,6 +284,13 @@ def loop():
                 cloudx = game.width
                 cloudy = game.height
                 print "The sky is falling!"
+            if event.key == ord('.'):
+                game.ticks+=1
+                print game.ticks
+            if event.key == ord(','):
+                game.ticks-=1
+                if game.ticks < 1:
+                    game.ticks = 1
 
     if ship.thrust < 0:
         ship.thrust = 0
