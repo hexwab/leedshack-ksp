@@ -257,13 +257,13 @@ def main():
     pygame.key.set_repeat(20, 20)
     global cloudx
     global cloudy
-    messages = ["CRASHED","WASTED","YOU DEAD","WRONG WAY","THE SKY IS UP","OOPS","NOT APOLLO 11","SMOOOTH"]
+    messages = ["CRASHED","WASTED","YOU DEAD","THE SKY IS UP","OOPS","NOT APOLLO 11","DOM'S BETTER"]
     global crashtext
     global r
     r = 2000
     global explosionalpha
     explosionalpha = 255
-    crashtext = messages[random.randint(0,7)]
+    crashtext = messages[random.randint(0,6)]
     cloudx = game.width
     cloudy = game.height
     game.screen = pygame.display.set_mode((game.width,game.height))
