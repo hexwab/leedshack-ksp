@@ -71,13 +71,19 @@ def loop():
                 game.screen.blit(ship.parachuteimage,(game.width/2-18,game.height/2-76))
             game.screen.blit(ship.rocket,(game.width/2-10,game.height/2-40))
         else:
-            explosionalpha = 0
+            global explosionalpha
             global crashtext
             text = game.crashfont.render(crashtext, 0, RED)
             textpos = text.get_rect()
             textpos.centerx = game.screen.get_rect().centerx
             textpos.centery = game.screen.get_rect().centery
             game.screen.blit(text,textpos)
+
+            if explosionalpha > 1:
+                boom = game.explosion.copy()
+                explosionalpha -= 2
+                boom.fill((255,255,255,explosionalpha),None,pygame.BLEND_RGBA_MULT)
+                game.screen.blit(boom,(game.width/2-64,game.height/2-64))
 
     # calculations
     if not game.crashed and not game.paused:
@@ -255,6 +261,8 @@ def main():
     global crashtext
     global r
     r = 2000
+    global explosionalpha
+    explosionalpha = 255
     crashtext = messages[random.randint(0,7)]
     cloudx = game.width
     cloudy = game.height
@@ -268,8 +276,9 @@ def main():
     game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png")
     game.navcircle = pygame.image.load("images/EXTRA BITS/all da ball.png")
     game.cloudedsky = pygame.image.load("images/EASTER_sGGE/cloud_full_of_yks.png")
-    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 64)
+    game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 56)
     game.font = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 18)
+    game.explosion = pygame.image.load("images/real stuff/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
     ship.fuel = 4000
     while game.running:
