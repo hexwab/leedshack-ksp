@@ -2,6 +2,12 @@ import os, pygame, math, random, pygame.gfxdraw
 from pygame.locals import *
 
 class planet:
+    """
+    For reference:
+    Earth's radius: 6,371 km (6,371,000 m)
+    Kerbin's radius: 600 km (600,000 m)
+    This planet's radius: 20 km (20,000m)
+    """
     r = 20000
 
 class game:
