@@ -1,5 +1,7 @@
 # Mini KSP-style space simulatron, 24-hour compo version
 
+### Branch by Harry Merckel, working on various things. Perhaps HUD, animations, neatening code and sorting out those terrible filenames...
+
 As submitted for LeedsHack 2015.
 
 Requirements: Python 2.x, Pygame.
