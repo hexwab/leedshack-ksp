@@ -2,7 +2,8 @@ import os, pygame, math, random, pygame.gfxdraw
 from pygame.locals import *
 
 class planet:
-    r = 20000
+    r = 600000
+    mu = 5000000000
 
 class game:
     width = 320*2
@@ -73,7 +74,7 @@ def tick():
         game.map = False
     else:
         # gravity
-        g = 0.01
+        g = planet.mu / (r*r)
         ship.dx -= g * math.cos(theta)
         ship.dy -= g * math.sin(theta)
         #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
@@ -101,16 +102,15 @@ def loop():
     if game.map:
         # map screen
         pygame.draw.rect(game.screen, BLACK, (0,0,game.width,game.height))
-        scale = 0.003
+        scale = 0.003*game.zoom
 
         # orbit
-        mu = 4600000 # CHECKME
         h = ship.x*ship.dy - ship.y*ship.dx
-        ex = ship.dy*h/mu - ship.x/r
-        ey =-ship.dx*h/mu - ship.y/r
+        ex = ship.dy*h/planet.mu - ship.x/r
+        ey =-ship.dx*h/planet.mu - ship.y/r
         e = math.sqrt(ex*ex+ey*ey)
         if e!=1:
-            a = h*h / (mu*(1-e*e))
+            a = h*h / (planet.mu*(1-e*e))
             omega = math.atan2(ey,ex)
             n = 1000
             for i in xrange(0,n-1):
@@ -120,9 +120,15 @@ def loop():
                 y = d*scale*math.sin(theta)
                 if abs(d*scale) < 2000:
                     game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
-            apo = a*(1-e*e)/(1+e)
-            peri  = a*(1-e*e)/(1-e)
-            #print peri, apo
+            apo = a*(1-e*e)/(1-e)
+            apo -= planet.r
+            peri = None
+            if e<1:
+                peri = a*(1-e*e)/(1+e)
+                peri -= planet.r
+                if peri<0: peri = None
+                
+            print "e=",e,"peri=",peri, "apo=",apo
 
         # planet
         pygame.draw.circle(game.screen,GROUND, (int(game.width/2),int(game.height/2)), int(planet.r*scale))
@@ -287,12 +293,17 @@ def loop():
                 cloudy = game.height
                 print "The sky is falling!"
             if event.key == ord('.'):
-                game.ticks+=1
+                game.ticks*=2
                 print game.ticks
             if event.key == ord(','):
-                game.ticks-=1
+                game.ticks/=2
+                print game.ticks
                 if game.ticks < 1:
                     game.ticks = 1
+            if event.key == ord('-'):
+                game.zoom*=.5
+            if event.key == ord('='):
+                game.zoom*=2
 
     if ship.thrust < 0:
         ship.thrust = 0
