@@ -4,9 +4,9 @@ from pygame.locals import *
 class planet:
     """
     For reference:
-    Earth's radius: 6,371 km (6,371,000 m)
-    Kerbin's radius: 600 km (600,000 m)
-    This planet's radius: 20 km (20,000m)
+    Earth's radius: 6,371km Scale height: 8.5km (distance over which atmosphere decreases by a factor of e (2.71828)) Atmospheric height: 
+    Kerbin's radius: 600km Scale height: 5.067km Atmospheric height: 70km (1E-5 atm, ~1 Pa)
+    This planet's radius: 20km Scale height: ?? Atmospheric height: ??
     """
     r = 20000
 
