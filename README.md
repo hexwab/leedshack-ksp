@@ -1,4 +1,6 @@
-# Mini KSP-style space simulatron, 24-hour compo version
+Mini KSP-style space simulatron, 24-hour compo version
+
+======
 
 ### Branch by Harry Merckel, working on various things. Perhaps HUD, animations, neatening code and sorting out those terrible filenames...
 
@@ -25,7 +27,7 @@ Keys:
 
 *[Full version coming eventually.  Watch this space.]*
 
-To look at:
+### To look at:
 
 https://en.wikipedia.org/wiki/Scale_height#Scale_height_used_in_a_simple_atmospheric_pressure_model
 
