@@ -18,6 +18,7 @@ Keys:
 * t: toggle SAS
 * p: deploy parachute
 * m: toggle map screen
+* -/=: zoom map
 * ,/.: increase/decrease timewarp
 * q: quit
 
