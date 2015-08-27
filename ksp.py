@@ -257,46 +257,48 @@ def loop():
             cloudy -= 2
             game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
-    # Key detection
+    # Controls
     for event in pygame.event.get():
         if event.type == QUIT:
             game.running = False
             return
         elif event.type == KEYDOWN:
             if event.key == ord('q'):
-                game.running = False
+                game.running = False # Quit
             elif event.key == ord('x'):
-                ship.thrust = 0 # no thrust
+                ship.thrust = 0 # 0% thrust
             elif event.key == ord('z'):
                 ship.thrust = 1 # 100% thrust
             elif event.key == ord('w'):
-                ship.thrust += 1./16
+                ship.thrust += 1./16 # Thrust increase
             elif event.key == ord('s'):
-                ship.thrust -= 1./16
+                ship.thrust -= 1./16 # Thrust decrease
             elif event.key == ord('a'):
-                ship.dphi -= .001
+                ship.dphi -= .001 # Rotate anticlockwise
             elif event.key == ord('d'):
-                ship.dphi += .001
+                ship.dphi += .001 # Rotate clockwise
         elif event.type == KEYUP:
             if event.key == ord(' '):
-                game.paused = not game.paused
+                game.paused = not game.paused # Pause
             if event.key == ord('m'):
-                game.map = not game.map
+                game.map = not game.map # Map screen
             if event.key == ord('t'):
-                ship.sas = not ship.sas
+                ship.sas = not ship.sas # SAS (rotation stabilisation)
                 print "sas enabled" if ship.sas else "sas disabled"
             if event.key == ord('p'):
-                ship.parachute = True
+                ship.parachute = True # Parachute
                 print "chute deployed"
             if event.key == ord('r'):
-                cloudx = game.width
+                cloudx = game.width # Reset cloud easter egg
                 cloudy = game.height
                 print "The sky is falling!"
             if event.key == ord('.'):
-                game.ticks+=1
+                game.ticks+=1 # Time accelerate
+                if game.ticks > 10:
+                    game.ticks = 10
                 print game.ticks
             if event.key == ord(','):
-                game.ticks-=1
+                game.ticks-=1 # Time decelerate
                 if game.ticks < 1:
                     game.ticks = 1
 
@@ -330,6 +332,7 @@ def main():
     game.cloudedsky = pygame.image.load("images/secret/cloud_full_of_sky.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 45)
     game.font = pygame.font.Font("fonts/DSEG7Classic-Bold.ttf", 20)
+    game.altfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF.ttf", 20)
     game.explosion = pygame.image.load("images/world/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
     ship.fuel = 4000
