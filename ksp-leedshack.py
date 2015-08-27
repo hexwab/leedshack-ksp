@@ -6,11 +6,9 @@ class planet:
     For reference:
     Earth's radius: 6,371km Scale height: 8.5km (distance over which atmosphere decreases by a factor of e (2.71828)) Atmospheric height: 
     Kerbin's radius: 600km Scale height: 5.067km Atmospheric height: 70km (1E-5 atm, ~1 Pa)
-    This planet's radius: 600km Scale height: 5km Atmospheric height: ??
+    This planet's radius: 20km Scale height: ?? Atmospheric height: ??
     """
-    r = 600000
-    scale = 5000
-    mu = 5000000000
+    r = 20000
 
 class game:
     width = 320*2
@@ -81,13 +79,13 @@ def tick():
         game.map = False
     else:
         # gravity
-        g = planet.mu / (r*r)
+        g = 0.01
         ship.dx -= g * math.cos(theta)
         ship.dy -= g * math.sin(theta)
         #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
         
         # drag
-        drag = math.exp(-(r-planet.r)/planet.scale)*0.035 if ship.parachute else math.exp(-(r-planet.r)/planet.scale)*0.0005
+        drag = math.exp(-(r-planet.r)/3000)*0.035 if ship.parachute else math.exp(-(r-planet.r)/3000)*0.0005
         #print "drag=",drag
         ship.dx *= 1-drag
         ship.dy *= 1-drag
@@ -109,15 +107,16 @@ def loop():
     if game.map:
         # map screen
         pygame.draw.rect(game.screen, BLACK, (0,0,game.width,game.height))
-        scale = 0.003*game.zoom
+        scale = 0.003
 
         # orbit
+        mu = 4600000 # CHECKME
         h = ship.x*ship.dy - ship.y*ship.dx
-        ex = ship.dy*h/planet.mu - ship.x/r
-        ey =-ship.dx*h/planet.mu - ship.y/r
+        ex = ship.dy*h/mu - ship.x/r
+        ey =-ship.dx*h/mu - ship.y/r
         e = math.sqrt(ex*ex+ey*ey)
         if e!=1:
-            a = h*h / (planet.mu*(1-e*e))
+            a = h*h / (mu*(1-e*e))
             omega = math.atan2(ey,ex)
             n = 1000
             for i in xrange(0,n-1):
@@ -127,15 +126,9 @@ def loop():
                 y = d*scale*math.sin(theta)
                 if abs(d*scale) < 2000:
                     game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
-            apo = a*(1-e*e)/(1-e)
-            apo -= planet.r
-            peri = None
-            if e<1:
-                peri = a*(1-e*e)/(1+e)
-                peri -= planet.r
-                if peri<0: peri = None
-                
-            print "e=",e,"peri=",peri, "apo=",apo
+            apo = a*(1-e*e)/(1+e)
+            peri  = a*(1-e*e)/(1-e)
+            #print peri, apo
 
         # planet
         pygame.draw.circle(game.screen,GROUND, (int(game.width/2),int(game.height/2)), int(planet.r*scale))
@@ -153,17 +146,19 @@ def loop():
         pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
-        # pygame's circle is inaccurate for large radii, so draw a circle ourself
-        for y in xrange(0,game.height-1):
-            if planet.r > abs(y-planety):
-                x = math.sqrt(planet.r*planet.r - (y-planety) * (y-planety))
-                xmin = planetx-x
-                xmax = planetx+x
-                xmin = 0 if xmin<0 else xmin
-                xmax = game.width-1 if xmax>game.width-1 else xmax
-                if xmin<xmax:
-                    pygame.draw.line(game.screen,GROUND,(xmin,y),(xmax,y))
+        # circle is inaccurate for large radii
+#        if planet.r > 5000:
+#            pygame.draw.polygon(game.screen, GROUND, 
+#        for x in xrange(0,game.width-1):
+#            for y in xrange(0,game.width-1):
+#                if (x-planetx)*(x-planetx)+(y-planety)*(y-planety) < planet.r *planet.r:
+#                    game.screen.set_at((x,y),GROUND)
 
+        if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
+            pygame.draw.circle(game.screen,GROUND, (int(planetx),int(planety)), planet.r)
+#        n = 16
+#        for i in xrange(1,n):
+#            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
         # Spaceship
         if not game.crashed:
             if ship.thrust > 0:
@@ -244,7 +239,7 @@ def loop():
     game.screen.blit(ship.fuelbar,(8,game.height-59-8))
 
     # Thrustometer
-    game.thrust = pygame.image.load("images/GUI/thrustbar.png") #Reloading to clear surface every time
+    game.thrust = pygame.image.load("images/EXTRA BITS/da PEN15 thrust.png") #Reloading to clear surface every time
     pygame.draw.rect(game.thrust,RED,(1,64-ship.thrust*64,22,1),2)
     game.screen.blit(game.thrust,(game.width-64-8-8-24,game.height-8-64))
     
@@ -262,53 +257,48 @@ def loop():
             cloudy -= 2
             game.screen.blit(game.cloudedsky, (cloudx,cloudy))
 
-    # Controls
+    # Key detection
     for event in pygame.event.get():
         if event.type == QUIT:
             game.running = False
             return
         elif event.type == KEYDOWN:
             if event.key == ord('q'):
-                game.running = False # Quit
+                game.running = False
             elif event.key == ord('x'):
-                ship.thrust = 0 # 0% thrust
+                ship.thrust = 0 # no thrust
             elif event.key == ord('z'):
                 ship.thrust = 1 # 100% thrust
             elif event.key == ord('w'):
-                ship.thrust += 1./16 # Thrust increase
+                ship.thrust += 1./16
             elif event.key == ord('s'):
-                ship.thrust -= 1./16 # Thrust decrease
+                ship.thrust -= 1./16
             elif event.key == ord('a'):
-                ship.dphi -= .001 # Rotate anticlockwise
+                ship.dphi -= .001
             elif event.key == ord('d'):
-                ship.dphi += .001 # Rotate clockwise
+                ship.dphi += .001
         elif event.type == KEYUP:
             if event.key == ord(' '):
-                game.paused = not game.paused # Pause
+                game.paused = not game.paused
             if event.key == ord('m'):
-                game.map = not game.map # Map screen
+                game.map = not game.map
             if event.key == ord('t'):
-                ship.sas = not ship.sas # SAS (rotation stabilisation)
+                ship.sas = not ship.sas
                 print "sas enabled" if ship.sas else "sas disabled"
             if event.key == ord('p'):
-                ship.parachute = True # Parachute
+                ship.parachute = True
                 print "chute deployed"
             if event.key == ord('r'):
-                cloudx = game.width # Reset cloud easter egg
+                cloudx = game.width
                 cloudy = game.height
                 print "The sky is falling!"
-            if event.key == ord('.'): # Time accelerate
-                game.ticks*=2
+            if event.key == ord('.'):
+                game.ticks+=1
                 print game.ticks
-            if event.key == ord(','): # Time decelerate
-                game.ticks/=2
+            if event.key == ord(','):
+                game.ticks-=1
                 if game.ticks < 1:
                     game.ticks = 1
-                print game.ticks
-            if event.key == ord('-'): # Map zoom out
-                game.zoom*=.5
-            if event.key == ord('='): # Map zoom in
-                game.zoom*=2
 
     if ship.thrust < 0:
         ship.thrust = 0
@@ -340,7 +330,6 @@ def main():
     game.cloudedsky = pygame.image.load("images/secret/cloud_full_of_sky.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 45)
     game.font = pygame.font.Font("fonts/DSEG7Classic-Bold.ttf", 20)
-    game.altfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 20)
     game.explosion = pygame.image.load("images/world/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
     ship.fuel = 4000
