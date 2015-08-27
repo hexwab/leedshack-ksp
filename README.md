@@ -1,6 +1,6 @@
-# Mini KSP-style space simulatron, 24-hour compo version
+# Mini KSP-style space simulatron
 
-As submitted for LeedsHack 2015.
+(Original LeedsHack 2015 submission is in branch "lh2015-entry".)
 
 Requirements: Python 2.x, Pygame.
 
