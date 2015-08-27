@@ -146,19 +146,17 @@ def loop():
         pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
-        # circle is inaccurate for large radii
-#        if planet.r > 5000:
-#            pygame.draw.polygon(game.screen, GROUND, 
-#        for x in xrange(0,game.width-1):
-#            for y in xrange(0,game.width-1):
-#                if (x-planetx)*(x-planetx)+(y-planety)*(y-planety) < planet.r *planet.r:
-#                    game.screen.set_at((x,y),GROUND)
+        # pygame's circle is inaccurate for large radii, so draw a circle ourself
+        for y in xrange(0,game.height-1):
+            if planet.r > abs(y-planety):
+                x = math.sqrt(planet.r*planet.r - (y-planety) * (y-planety))
+                xmin = planetx-x
+                xmax = planetx+x
+                xmin = 0 if xmin<0 else xmin
+                xmax = game.width-1 if xmax>game.width-1 else xmax
+                if xmin<xmax:
+                    pygame.draw.line(game.screen,GROUND,(xmin,y),(xmax,y))
 
-        if abs(planetx)<planet.r*2 and abs(planety)<planet.r*2:
-            pygame.draw.circle(game.screen,GROUND, (int(planetx),int(planety)), planet.r)
-#        n = 16
-#        for i in xrange(1,n):
-#            pygame.gfxdraw.pie(game.screen, int(planetx), int(planety), int(planet.r*10), 360*i/n, 360*(i+1)/n, (RED if i%2 else BLACK))
         # Spaceship
         if not game.crashed:
             if ship.thrust > 0:
