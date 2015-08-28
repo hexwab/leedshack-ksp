@@ -10,7 +10,7 @@ class planet:
     """
     r = 600000
     scale = 5000
-    mu = 5000000000
+    mu = 500000000
 
 class game:
     width = 320*2
@@ -38,6 +38,17 @@ class ship:
     crash_tolerance = 0.5
     fuel = 0
     landed = False
+
+def fmt_distance(d):
+    if d==None: return '-'
+    return "%.1f km" % (d/1000)
+
+def fmt_time(t):
+    if t==None: return '-'
+    if t<60: return "%.1f s" % t
+    if t<3600: return "%.1f m" % (t/60)
+    if t<86400: return "%.1f h" % (t/3600)
+    return "%.1f d" % (t/86400)
 
 def tick():
     # Physics-y stuff
@@ -109,7 +120,7 @@ def loop():
     if game.map:
         # map screen
         pygame.draw.rect(game.screen, BLACK, (0,0,game.width,game.height))
-        scale = 0.003*game.zoom
+        scale = 0.0003*game.zoom
 
         # orbit
         h = ship.x*ship.dy - ship.y*ship.dx
@@ -117,25 +128,48 @@ def loop():
         ey =-ship.dx*h/planet.mu - ship.y/r
         e = math.sqrt(ex*ex+ey*ey)
         if e!=1:
-            a = h*h / (planet.mu*(1-e*e))
+            a = h*h / planet.mu
             omega = math.atan2(ey,ex)
             n = 1000
             for i in xrange(0,n-1):
                 theta = i*2*math.pi/n
-                d = a*(1-e*e)/(1+e*math.cos(-theta + omega))
-                x = d*scale*math.cos(theta)
-                y = d*scale*math.sin(theta)
-                if abs(d*scale) < 2000:
-                    game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
-            apo = a*(1-e*e)/(1-e)
+                c = 1+e*math.cos(-theta + omega)
+                if c!=0:
+                    d = a/c
+                    x = d*scale*math.cos(theta)
+                    y = d*scale*math.sin(theta)
+                    if d>0 and d*scale < 2000:
+                        game.screen.set_at((int(game.width/2+x),int(game.height/2+y)),WHITE)
+            apo = a/(1-e)
+            peri = a/(1+e)
             apo -= planet.r
+            peri -= planet.r
+            T = None
+            if e<1: # elliptic
+                a /= (1-e*e)
+                T = 2*math.pi*math.sqrt(a*a*a/planet.mu) # CHECKME
+                if peri<0:
+                    peri = None; T = None
+            else: # hyperbolic
+                apo = None
+                if peri<0:
+                    peri = None
+        else: #FIXME
+            apo = None
             peri = None
-            if e<1:
-                peri = a*(1-e*e)/(1+e)
-                peri -= planet.r
-                if peri<0: peri = None
-                
-            print "e=",e,"peri=",peri, "apo=",apo
+            T = None
+
+        # parameter display
+        params = (("Ecc.","%.5f" % e),
+                  ("Apo. ",fmt_distance(apo)),
+                  ("Peri. ",fmt_distance(peri)),
+                  ("T", fmt_time(T)),
+        )
+        x=10; y = 40
+        for line in params:
+            game.screen.blit(game.textfont.render(line[0], True, WHITE), (x,y))
+            game.screen.blit(game.textfont.render(line[1], True, WHITE), (x+40,y))
+            y += 18
 
         # planet
         pygame.draw.circle(game.screen,GROUND, (int(game.width/2),int(game.height/2)), int(planet.r*scale))
@@ -340,6 +374,7 @@ def main():
     game.cloudedsky = pygame.image.load("images/secret/cloud_full_of_sky.png")
     game.crashfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 45)
     game.font = pygame.font.Font("fonts/DSEG7Classic-Bold.ttf", 20)
+    game.textfont = pygame.font.Font(None, 24)
     game.altfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 20)
     game.explosion = pygame.image.load("images/world/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
