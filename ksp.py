@@ -187,7 +187,7 @@ def loop():
     else:
         # Sky and planet
         atmo =(1-math.exp(-(r-planet.r)/planet.scale))
-        skycolour = (0,128-atmo*128,255-atmo*255) if atmo < 1 else (0,128,255)
+        skycolour = (0,128-atmo*128,255-atmo*255) if atmo > 0 else (0,128,255)
         pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
         planety = game.height/2 + ship.x*math.cos(ship.phi) + ship.y*math.sin(ship.phi)
