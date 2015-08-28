@@ -152,7 +152,7 @@ def loop():
         pygame.draw.line(game.screen,RED, (shipx,shipy), (int(shipx+ship.dx*4), int(shipy+ship.dy*4)))
     else:
         # Sky and planet
-        atmo = 1 if (r-planet.r) > 10000 else 0 if r<planet.r else ((r-planet.r)/10000)
+        atmo = 1 if (r-planet.r) > 70000 else 0 if r<planet.r else ((r-planet.r)/70000)
         skycolour = (0,128-atmo*128,255-atmo*255)
         pygame.draw.rect(game.screen, skycolour, (0,0,game.width,game.height))
         planetx = game.width/2 + ship.x*math.sin(ship.phi) - ship.y*math.cos(ship.phi)
