@@ -37,6 +37,7 @@ class ship:
     parachute = False
     crash_tolerance = 0.5
     fuel = 0
+    maxfuel = 4000
     landed = False
 
 def tick():
@@ -87,6 +88,9 @@ def tick():
         #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
         
         # drag
+        """ Do we want the KSP 70km drag cutout so it's not wasting resources calculating drag for increadibly small numbers?
+            As per the KSP wiki, air pressure at that height should be 1E-6 atmospheres, or ~0.1 pascals which is
+            0.1N over 1m^2 """
         drag = math.exp(-(r-planet.r)/planet.scale)*0.035 if ship.parachute else math.exp(-(r-planet.r)/planet.scale)*0.0005
         #print "drag=",drag
         ship.dx *= 1-drag
@@ -210,25 +214,26 @@ def loop():
     game.screen.blit (text,textpos)
 
     # Fuel bar and fuel management
-    if ship.fuel > 3500:
+    fuelincrement = int(ship.maxfuel/8)
+    if ship.fuel > ship.maxfuel-fuelincrement:
         ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
-    elif ship.fuel > 3000:
+    elif ship.fuel > ship.maxfuel-fuelincrement*2:
         ship.fuelbar = pygame.image.load("images/fuel/fuel_7.png")
-    elif ship.fuel > 2500:
+    elif ship.fuel > ship.maxfuel-fuelincrement*3:
         ship.fuelbar = pygame.image.load("images/fuel/fuel_6.png")
-    elif ship.fuel > 2000:
+    elif ship.fuel > ship.maxfuel-fuelincrement*4:
         ship.fuelbar = pygame.image.load("images/fuel/fuel_5.png")
-    elif ship.fuel > 1500:
+    elif ship.fuel > ship.maxfuel-fuelincrement*5:
         if pygame.time.get_ticks() % 2000 < 500:
             ship.fuelbar = pygame.image.load("images/fuel/fuel_4-1.png")
         else:
             ship.fuelbar = pygame.image.load("images/fuel/fuel_4.png")
-    elif ship.fuel > 1000:
+    elif ship.fuel > ship.maxfuel-fuelincrement*6:
         if pygame.time.get_ticks() % 2000 < 750:
             ship.fuelbar = pygame.image.load("images/fuel/fuel_3-1.png")
         else:
             ship.fuelbar = pygame.image.load("images/fuel/fuel_3.png")
-    elif ship.fuel > 500:
+    elif ship.fuel > ship.maxfuel-fuelincrement*7:
             if pygame.time.get_ticks() % 1000 < 500:
                 ship.fuelbar = pygame.image.load("images/fuel/fuel_2-1.png")
             else:
@@ -343,7 +348,7 @@ def main():
     game.altfont = pygame.font.Font("fonts/8-BIT_WONDER.TTF", 20)
     game.explosion = pygame.image.load("images/world/explosion.png")
     ship.fuelbar = pygame.image.load("images/fuel/fuel_8.png")
-    ship.fuel = 4000
+    ship.fuel = ship.maxfuel
     while game.running:
         loop()
         pygame.display.flip()
