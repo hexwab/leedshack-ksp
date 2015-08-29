@@ -402,3 +402,16 @@ def main():
 #this calls the 'main' function when this script is executed
 if __name__ == '__main__': main()
 
+# unit tests
+# run with "py.test ksp.py"
+
+def test_gravity():
+    """drop the ship from 1km up, check time to impact"""
+    ship.x = 0
+    ship.y = planet.r + 1000
+    ship.dx = 0
+    ship.dy = 0
+    planet.atmo = 0 # no atmospheric drag for this test
+    while not game.crashed:
+        tick()
+    assert(game.elapsed == 860) # about 14.3 seconds
