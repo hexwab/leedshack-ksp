@@ -9,7 +9,8 @@ class planet:
     This planet's radius: 600km Scale height: 5km Atmospheric height: ??
     """
     r = 600000 # m
-    scale = 5000 # m
+    atmo = 0.0005 # drag per tick at the surface
+    scale = 5000 # scale height, m
     mu = 3531600000000 / 60 / 60 # m^3/tick^2, 60 ticks/sec
 
 class game:
@@ -26,7 +27,7 @@ class game:
     elapsed = 0
 
 class ship:
-    x = 0 #planet.r
+    x = 100 #planet.r
     y = planet.r #+ 1000
     dx = 0 #15
     dy = 0
@@ -104,7 +105,8 @@ def tick():
         """ Do we want the KSP 70km drag cutout so it's not wasting resources calculating drag for increadibly small numbers?
             As per the KSP wiki, air pressure at that height should be 1E-6 atmospheres, or ~0.1 pascals which is
             0.1N over 1m^2 """
-        drag = math.exp(-(r-planet.r)/planet.scale)*0.035 if ship.parachute else math.exp(-(r-planet.r)/planet.scale)*0.0005
+        drag = math.exp(-(r-planet.r)/planet.scale) * planet.atmo
+        if ship.parachute: drag *= 70
         #print "drag=",drag
         ship.dx *= 1-drag
         ship.dy *= 1-drag
