@@ -8,9 +8,9 @@ class planet:
     Kerbin's radius: 600km Scale height: 5.067km Atmospheric height: 70km (1E-5 atm, ~1 Pa)
     This planet's radius: 600km Scale height: 5km Atmospheric height: ??
     """
-    r = 600000
-    scale = 5000
-    mu = 500000000
+    r = 600000 # m
+    scale = 5000 # m
+    mu = 3531600000000 / 60 / 60 # m^3/tick^2, 60 ticks/sec
 
 class game:
     width = 320*2
@@ -22,7 +22,8 @@ class game:
     screen = None
     map = False
     fuel = 0
-    ticks = 1
+    warp = 1
+    elapsed = 0
 
 class ship:
     x = 0 #planet.r
@@ -52,6 +53,8 @@ def fmt_time(t):
     return "%.1f d" % (t/86400)
 
 def tick():
+    game.elapsed += 1
+
     # Physics-y stuff
     ship.dx += ship.maxthrust * ship.thrust * math.cos(ship.phi)
     ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
@@ -88,7 +91,6 @@ def tick():
         ship.parachute = False
             
     elif (r < planet.r):
-        print "crashed", abs(r-planet.r), speed
         game.crashed = True
         game.map = False
     else:
@@ -228,7 +230,7 @@ def loop():
 
     # calculations
     if not game.crashed and not game.paused:
-        for i in xrange(0,game.ticks):
+        for i in xrange(0,game.warp):
             tick()
         
     # Altimeter
@@ -246,6 +248,13 @@ def loop():
     textpos.centerx = game.screen.get_rect().centerx+65+8
     textpos.centery += 14
     game.screen.blit (text,textpos)
+
+    # Time
+    el = game.elapsed / 60 # seconds
+    timestr = "%02d:%02d:%02d" % \
+              (el/60/60, (el/60)%60, el%60)
+    text = game.font.render(timestr, True, WHITE)
+    game.screen.blit(text,(10,10))
 
     # Fuel bar and fuel management
     fuelincrement = int(ship.maxfuel/8)
@@ -337,13 +346,11 @@ def loop():
                 cloudy = game.height
                 print "The sky is falling!"
             if event.key == ord('.'): # Time accelerate
-                game.ticks*=2
-                print game.ticks
+                game.warp*=4
             if event.key == ord(','): # Time decelerate
-                game.ticks/=2
-                if game.ticks < 1:
-                    game.ticks = 1
-                print game.ticks
+                game.warp/=4
+                if game.warp < 1:
+                    game.warp = 1
             if event.key == ord('-'): # Map zoom out
                 game.zoom*=.5
             if event.key == ord('='): # Map zoom in
