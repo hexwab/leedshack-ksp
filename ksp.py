@@ -42,6 +42,9 @@ class ship:
     maxfuel = 4000
     landed = False
 
+class Orbit:
+    pass
+
 def fmt_distance(d):
     if d==None: return '-'
     return "%.1f km" % (d/1000)
@@ -53,6 +56,46 @@ def fmt_time(t):
     if t<86400: return "%.1f h" % (t/3600)
     return "%.1f d" % (t/86400)
 
+def init_orbit():
+    """Set up orbital elements from state vectors."""
+    orb = Orbit()
+    r = ship.r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
+    h = ship.x*ship.dy - ship.y*ship.dx # m^2/tick
+    orb.ex = ex = ship.dy*h/planet.mu - ship.x/ship.r
+    orb.ey = ey =-ship.dx*h/planet.mu - ship.y/ship.r
+    orb.e = e = math.sqrt(ex*ex+ey*ey) # eccentricity, dimensionless
+    orb.epoch = game.elapsed # ticks
+    orb.m0 = math.atan2(ey,ex) # mean anomaly at epoch, rad
+    orb.a = a = h*h * (1-e*e) / planet.mu # semi-major axis, m
+    orb.n = math.sqrt(planet.mu/(a*a*a)) # mean motion, rad/tick
+    ship.orbit = orb
+    ship.orbit_valid = True
+
+def ecc(e,m):
+    """Calculate eccentric anomaly from mean anomaly."""
+    E = m
+    F = E - e*math.sin(m) - m
+    i = 0
+    while abs(F) > 1e-8:
+        E -= F/(1-e*math.cos(E))
+        F = E - e*math.sin(E) - m
+        i += 1
+    print i," iterations, m=",m," E=",E
+    return E
+
+def render_orbit(ship):
+    """Calculate state vectors from orbital elements."""
+    orb = ship.orbit
+    E = ecc(orb.e, orb.m0)
+    a = orb.a
+    # a=semimajor axis, ec=eccentricity, E=eccentric anomaly
+    # x,y = coordinates of the planet with respect to the Sun
+    C = math.cos(E)
+    S = math.sin(E)
+    x = a*(C-orb.e)
+    y = a*math.sqrt(1.0-orb.e*orb.e)*S
+    return (x,y)
+
 def tick():
     game.elapsed += 1
 
@@ -61,7 +104,7 @@ def tick():
     ship.dy += ship.maxthrust * ship.thrust * math.sin(ship.phi)
         #print "thrust ", ship.thrust * ship.maxthrust * math.cos(ship.phi), ship.maxthrust * ship.thrust * math.sin(ship.phi)
     ship.speed = speed = math.sqrt(ship.dx*ship.dx+ship.dy*ship.dy)
-    r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
+    ship.r = math.sqrt(ship.x*ship.x+ship.y*ship.y)
     ship.theta = theta = math.atan2(ship.y,ship.x)
     
     if ship.landed and ship.fuel < 4000:
@@ -72,6 +115,7 @@ def tick():
     ship.phi+=ship.dphi
     ship.x += ship.dx
     ship.y += ship.dy
+    #print "x=",ship.x,"y=",ship.y,"dx=",ship.dx,"dy=",ship.dy
     if ship.sas:
         if ship.dphi:
             ship.dphi += -0.0002 if ship.dphi>0 else 0.0002
@@ -83,7 +127,7 @@ def tick():
     # (c) heading downwards;
     # [(d) pointing up (not yet)]
     # to land safely
-    if r < planet.r+1e-8 and planet.r-r<=speed*2 and speed < ship.crash_tolerance \
+    if ship.r < planet.r+1e-8 and planet.r-ship.r<=speed*2 and speed < ship.crash_tolerance \
             and ((ship.x+ship.dx)*(ship.x+ship.dx) + (ship.y+ship.dy)*(ship.y+ship.dy) <= ship.x*ship.x+ship.y*ship.y):
         ship.dx = ship.dy = 0
         ship.x = planet.r * math.cos(theta)
@@ -91,12 +135,12 @@ def tick():
         ship.landed = True
         ship.parachute = False
             
-    elif (r < planet.r):
+    elif (ship.r < planet.r):
         game.crashed = True
         game.map = False
     else:
         # gravity
-        g = planet.mu / (r*r)
+        g = planet.mu / (ship.r*ship.r)
         ship.dx -= g * math.cos(theta)
         ship.dy -= g * math.sin(theta)
         #print "grav ", -g * math.cos(theta), -g * math.sin(theta)
@@ -105,7 +149,7 @@ def tick():
         """ Do we want the KSP 70km drag cutout so it's not wasting resources calculating drag for increadibly small numbers?
             As per the KSP wiki, air pressure at that height should be 1E-6 atmospheres, or ~0.1 pascals which is
             0.1N over 1m^2 """
-        drag = math.exp(-(r-planet.r)/planet.scale) * planet.atmo
+        drag = math.exp(-(ship.r-planet.r)/planet.scale) * planet.atmo
         if ship.parachute: drag *= 70
         #print "drag=",drag
         ship.dx *= 1-drag
@@ -415,3 +459,21 @@ def test_gravity():
     while not game.crashed:
         tick()
     assert(game.elapsed == 860) # about 14.3 seconds
+
+def test_kepler():
+    """test Keplerian orbit parameters"""
+    # 113.4 by 138.3km orbit, just after apoapsis
+    # eccentricity 0.01719, period ~35 minutes
+    ship.x = -738157.980446
+    ship.y = -595.861732011
+    ship.dx = 0.124101741036
+    ship.dy = -36.1441407836
+    init_orbit()
+    assert (ship.orbit.e == 0.017184013572215145)
+    assert (2*math.pi/ship.orbit.n/60/60 == 34.42803571757905)
+
+    #from pprint import pprint
+    #pprint (vars(ship.orbit))
+
+    #(x,y) = render_orbit(ship)
+    #print x,y
